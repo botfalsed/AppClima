@@ -11,25 +11,55 @@ import {
   Platform,
   StatusBar,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+
+// Función para agrupar los datos por día
+const groupDataByDay = (list: any[]) => {
+  const grouped: { [key: string]: any[] } = {};
+  list.forEach((item) => {
+    const date = new Date(item.dt * 1000).toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+    });
+    if (!grouped[date]) {
+      grouped[date] = [];
+    }
+    grouped[date].push(item);
+  });
+  return grouped;
+};
 
 export default function HomeScreen() {
   const [weather, setWeather] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [dailyForecast, setDailyForecast] = useState<any>(null);
+  const [selectedDayData, setSelectedDayData] = useState<any>(null);
 
   const API_KEY = "b45375dea9d20988b3f40bc8ab4a7ab8";
   const lat = -8.379; // Pucallpa
   const lon = -74.5539;
 
-  const URL = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=es`;
+  const URL = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=es`;
+  const CURRENT_WEATHER_URL = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=es`;
 
   useEffect(() => {
-    fetch(URL)
-      .then((res) => res.json())
-      .then((data) => {
-        setWeather(data);
+    Promise.all([fetch(URL), fetch(CURRENT_WEATHER_URL)])
+      .then(([forecastRes, currentRes]) =>
+        Promise.all([forecastRes.json(), currentRes.json()])
+      )
+      .then(([forecastData, currentData]) => {
+        const grouped = groupDataByDay(forecastData.list);
+        const days = Object.keys(grouped).map((day) => ({
+          day: day,
+          data: grouped[day],
+        }));
+
+        setDailyForecast(days);
+        setWeather(currentData);
         setLoading(false);
+        setSelectedDayData(days[0]); // Seleccionar el primer día por defecto
       })
       .catch((err) => {
         console.error(err);
@@ -45,7 +75,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (!weather || !weather.current) {
+  if (!weather || !dailyForecast) {
     return (
       <View style={styles.container}>
         <Text style={{ color: "#fff", fontSize: 18, marginBottom: 10 }}>
@@ -56,11 +86,11 @@ export default function HomeScreen() {
     );
   }
 
-  const temp = Math.round(weather.current.temp);
-  const desc = weather.current.weather[0].description;
-  const icon = weather.current.weather[0].icon;
-  const feelsLike = Math.round(weather.current.feels_like);
-  const humidity = weather.current.humidity;
+  const temp = Math.round(weather.main.temp);
+  const desc = weather.weather[0].description;
+  const icon = weather.weather[0].icon;
+  const feelsLike = Math.round(weather.main.feels_like);
+  const humidity = weather.main.humidity;
 
   return (
     <ImageBackground
@@ -93,7 +123,7 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>Próximas horas ⏰</Text>
               <FlatList
                 horizontal
-                data={weather.hourly.slice(0, 8)}
+                data={dailyForecast[0].data.slice(0, 8)} // Datos de las primeras 8 horas del día actual
                 keyExtractor={(item) => item.dt.toString()}
                 showsHorizontalScrollIndicator={false}
                 renderItem={({ item }) => {
@@ -108,7 +138,7 @@ export default function HomeScreen() {
                         source={{ uri: `https://openweathermap.org/img/wn/${item.weather[0].icon}.png` }}
                         style={{ width: 40, height: 40 }}
                       />
-                      <Text style={styles.hourText}>{Math.round(item.temp)}°C</Text>
+                      <Text style={styles.hourText}>{Math.round(item.main.temp)}°C</Text>
                     </View>
                   );
                 }}
@@ -118,31 +148,64 @@ export default function HomeScreen() {
             {/* Próximos días */}
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Próximos días 📅</Text>
-              {weather.daily.slice(1, 8).map((d: any, index: number) => {
-                const day = new Date(d.dt * 1000).toLocaleDateString("es-ES", {
-                  weekday: "short",
-                  day: "numeric",
-                });
+              {dailyForecast.map((d: any, index: number) => {
+                const mainWeather = d.data[0].weather[0];
+                const dayTemp = Math.round(d.data[0].main.temp);
+                
                 return (
-                  <View
-                    key={d.dt}
-                    style={[
-                      styles.dayBox,
-                      { backgroundColor: index % 2 === 0 ? "rgba(255,255,255,0.05)" : "transparent" },
-                    ]}
-                  >
-                    <Text style={styles.dayText}>{day}</Text>
-                    <Image
-                      source={{ uri: `https://openweathermap.org/img/wn/${d.weather[0].icon}.png` }}
-                      style={{ width: 36, height: 36 }}
-                    />
-                    <Text style={styles.dayText}>
-                      {Math.round(d.temp.min)}° - {Math.round(d.temp.max)}°C
-                    </Text>
-                  </View>
+                  <TouchableOpacity key={d.day} onPress={() => setSelectedDayData(d)}>
+                    <View
+                      style={[
+                        styles.dayBox,
+                        { 
+                          backgroundColor: selectedDayData && selectedDayData.day === d.day ? "rgba(255,255,255,0.25)" : "transparent",
+                          borderBottomWidth: index === dailyForecast.length - 1 ? 0 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.dayText, { textAlign: "left" }]}>{d.day}</Text>
+                      <Image
+                        source={{ uri: `https://openweathermap.org/img/wn/${mainWeather.icon}.png` }}
+                        style={{ width: 36, height: 36 }}
+                      />
+                      <Text style={[styles.dayText, { textAlign: "right" }]}>
+                        {dayTemp}°C
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
+
+            {/* Próximas horas del día seleccionado */}
+            {selectedDayData && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Previsión de {selectedDayData.day} ⏰</Text>
+                <FlatList
+                  horizontal
+                  data={selectedDayData.data}
+                  keyExtractor={(item) => item.dt.toString()}
+                  showsHorizontalScrollIndicator={false}
+                  renderItem={({ item }) => {
+                    const hour = new Date(item.dt * 1000).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                    return (
+                      <View style={styles.hourBox}>
+                        <Text style={styles.hourText}>{hour}</Text>
+                        <Image
+                          source={{ uri: `https://openweathermap.org/img/wn/${item.weather[0].icon}.png` }}
+                          style={{ width: 40, height: 40 }}
+                        />
+                        <Text style={styles.hourText}>{Math.round(item.main.temp)}°C</Text>
+                      </View>
+                    );
+                  }}
+                />
+              </View>
+            )}
+
           </ScrollView>
         </LinearGradient>
       </SafeAreaView>
@@ -241,9 +304,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.12)",
     borderRadius: 10,
+    width: "100%",
   },
   dayText: {
     color: "#fff",
