@@ -14,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import CurrentWeather from "@/components/clima/climaactual";
 import HourlyForecast from "@/components/clima/climaxhora";
 import DailyForecast from "@/components/clima/climaxdias";
+import SearchCity from "@/components/clima/buscar";
 
 // 🔹 Agrupar datos por día
 const groupDataByDay = (list: any[]) => {
@@ -34,32 +35,47 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [dailyForecast, setDailyForecast] = useState<any>(null);
   const [selectedDayData, setSelectedDayData] = useState<any>(null);
+  const [city, setCity] = useState("Pucallpa"); // ciudad inicial
 
   const API_KEY = "b45375dea9d20988b3f40bc8ab4a7ab8";
-  const lat = -8.379; // Pucallpa
-  const lon = -74.5539;
 
-  const URL = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=es`;
-  const CURRENT_WEATHER_URL = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=es`;
+  // 🔹 Función para obtener clima por ciudad
+  const fetchWeather = async (cityName: string) => {
+    try {
+      setLoading(true);
 
+      const forecastRes = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&appid=${API_KEY}&units=metric&lang=es`
+      );
+      const currentRes = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric&lang=es`
+      );
+
+      const forecastData = await forecastRes.json();
+      const currentData = await currentRes.json();
+
+      if (forecastData.cod !== "200" || currentData.cod !== 200) {
+        throw new Error("Ciudad no encontrada");
+      }
+
+      const grouped = groupDataByDay(forecastData.list);
+      const days = Object.keys(grouped).map((day) => ({ day, data: grouped[day] }));
+
+      setDailyForecast(days);
+      setWeather(currentData);
+      setSelectedDayData(days[0]); // Primer día seleccionado
+      setCity(cityName);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo obtener el clima de esa ciudad ❌");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Buscar ciudad inicial
   useEffect(() => {
-    Promise.all([fetch(URL), fetch(CURRENT_WEATHER_URL)])
-      .then(([forecastRes, currentRes]) =>
-        Promise.all([forecastRes.json(), currentRes.json()])
-      )
-      .then(([forecastData, currentData]) => {
-        const grouped = groupDataByDay(forecastData.list);
-        const days = Object.keys(grouped).map((day) => ({ day, data: grouped[day] }));
-
-        setDailyForecast(days);
-        setWeather(currentData);
-        setSelectedDayData(days[0]); // Primer día seleccionado
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    fetchWeather(city);
   }, []);
 
   if (loading) {
@@ -88,9 +104,12 @@ export default function HomeScreen() {
         <LinearGradient colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.2)"]} style={styles.overlay}>
           <ScrollView contentContainerStyle={{ alignItems: "center" }} showsVerticalScrollIndicator={false}>
             
+            {/* 🔎 Buscador de ciudades */}
+            <SearchCity onSearch={fetchWeather} />
+
             {/* Clima actual */}
             <CurrentWeather
-              city="Pucallpa"
+              city={city}
               temp={Math.round(weather.main.temp)}
               desc={weather.weather[0].description}
               icon={weather.weather[0].icon}
