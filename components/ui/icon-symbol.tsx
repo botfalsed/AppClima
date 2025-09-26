@@ -1,41 +1,84 @@
-// Fallback for using MaterialIcons on Android and web.
+import React from 'react';
+import { Platform, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
-import { ComponentProps } from 'react';
-import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
-
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = keyof typeof MAPPING;
-
-/**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
- */
-const MAPPING = {
+// Mapeo de SF Symbols a Ionicons
+const iconMap: { [key: string]: keyof typeof Ionicons.glyphMap } = {
   'house.fill': 'home',
+  'house': 'home-outline',
   'paperplane.fill': 'send',
-  'chevron.left.forwardslash.chevron.right': 'code',
-  'chevron.right': 'chevron-right',
-} as IconMapping;
+  'paperplane': 'send-outline',
+  'cloud.sun.fill': 'partly-sunny',
+  'cloud.sun': 'partly-sunny-outline',
+  'sun.max.fill': 'sunny',
+  'sun.max': 'sunny-outline',
+  'cloud.fill': 'cloudy',
+  'cloud': 'cloud-outline',
+  'cloud.rain.fill': 'rainy',
+  'cloud.rain': 'rainy-outline',
+  'cloud.snow.fill': 'snow',
+  'cloud.snow': 'snow-outline',
+  'cloud.bolt.fill': 'thunderstorm',
+  'cloud.bolt': 'thunderstorm-outline',
+  'eye.fill': 'eye',
+  'eye': 'eye-outline',
+  'thermometer': 'thermometer',
+  'drop.fill': 'water',
+  'drop': 'water-outline',
+  'wind': 'leaf',
+  'location.fill': 'location',
+  'location': 'location-outline',
+  'gear.fill': 'settings',
+  'gear': 'settings-outline',
+  'magnifyingglass': 'search',
+  'plus': 'add',
+  'minus': 'remove',
+  'checkmark': 'checkmark',
+  'xmark': 'close',
+  'arrow.left': 'arrow-back',
+  'arrow.right': 'arrow-forward',
+  'arrow.up': 'arrow-up',
+  'arrow.down': 'arrow-down',
+};
 
-/**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
- */
 export function IconSymbol({
   name,
   size = 24,
   color,
   style,
+  ...rest
 }: {
-  name: IconSymbolName;
+  name: string;
   size?: number;
-  color: string | OpaqueColorValue;
+  color: string;
   style?: StyleProp<TextStyle>;
-  weight?: SymbolWeight;
+  weight?: string;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  if (Platform.OS === 'ios') {
+    // En iOS, intenta usar el componente específico si está disponible
+    try {
+      const { IconSymbol: IOSIconSymbol } = require('./icon-symbol.ios');
+      return <IOSIconSymbol name={name} size={size} color={color} style={style} {...rest} />;
+    } catch {
+      // Si falla, usa el fallback de Ionicons
+    }
+  }
+  
+  // Usar Ionicons como fallback para otras plataformas
+  const ionIconName = iconMap[name] || 'help-circle';
+  
+  // Debug: mostrar qué icono se está usando
+  if (!iconMap[name]) {
+    console.log(`Icono no encontrado en el mapeo: ${name}, usando fallback: ${ionIconName}`);
+  }
+  
+  return (
+    <Ionicons
+      name={ionIconName}
+      size={size}
+      color={color}
+      style={style}
+      {...rest}
+    />
+  );
 }
