@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Platform, View, Text } from 'react-native';
 
 import { HapticTab } from '../../components/haptic-tab';
@@ -13,11 +13,35 @@ import { getWeatherGradient } from '../../utils/iconSelector';
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { weatherData } = useContext(WeatherContext);
+  const [activeTab, setActiveTab] = useState('index');
 
   // Obtener colores del gradiente basado en el clima con validación de tipos
   const conditionCode = weatherData?.current?.condition?.code ?? 1000;
   const isDay = weatherData?.current?.is_day ?? 1;
   const gradientColors = getWeatherGradient(conditionCode, isDay) || ['#4A90E2', '#7BB3F0', '#A8D0F7'];
+
+  // Función para obtener el título y el icono según la pestaña activa
+  const getHeaderInfo = () => {
+    switch (activeTab) {
+      case 'index':
+        return {
+          title: 'Pronóstico del Clima',
+          icon: 'cloud.sun.fill'
+        };
+      case 'explore':
+        return {
+          title: '+ Funciones',
+          icon: 'cloud.fill'
+        };
+      default:
+        return {
+          title: 'Pronóstico del Clima',
+          icon: 'cloud.fill'
+        };
+    }
+  };
+
+  const headerInfo = getHeaderInfo();
 
   return (
     <Tabs
@@ -36,9 +60,9 @@ export default function TabLayout() {
           <View style={styles.headerContainer}>
             <View style={styles.headerContent}>
               <View style={styles.iconContainer}>
-                <IconSymbol size={28} name="cloud.snow.fill" color="#e6ebee" />
+                <IconSymbol size={28} name={headerInfo.icon} color="#e6ebee" />
               </View>
-              <Text style={styles.headerTitle}>Pronóstico del Clima</Text>
+              <Text style={styles.headerTitle}>{headerInfo.title}</Text>
             </View>
           </View>
         ),
@@ -46,15 +70,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Pronóstico del Clima',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Clima',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="cloud.sun.fill" color={color} />,
+        }}
+        listeners={{
+          focus: () => setActiveTab('index'),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explorar',
+          title: '+ Funciones',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+        }}
+        listeners={{
+          focus: () => setActiveTab('explore'),
         }}
       />
     </Tabs>
@@ -81,8 +111,6 @@ const styles = {
   iconContainer: {
     marginRight: 10,
     padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
