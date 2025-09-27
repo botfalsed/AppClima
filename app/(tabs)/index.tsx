@@ -21,8 +21,11 @@ export default function HomeScreen() {
     <ImageBackground 
       source={backgroundImage} 
       style={styles.container}
-      resizeMode="cover"
+      resizeMode="stretch"
     >
+      {/* Capa overlay para hacer la imagen más opaca */}
+      <View style={styles.overlay} />
+      
       <View style={styles.searchContainer}>
         <Buscar />
       </View>
@@ -39,18 +42,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Ajusta la opacidad aquí (0.0 = transparente, 1.0 = opaco)
+    zIndex: 2,
+  },
   searchContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 1000,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0)',
     paddingTop: 50, // Espacio para la barra de estado
     paddingBottom: 10, // Espacio inferior para separación
   },
   scrollView: {
     flex: 1,
     marginTop: 215, // Margen superior para evitar superposición
+    zIndex: 2, // Asegurar que el contenido esté por encima del overlay
   },
 });

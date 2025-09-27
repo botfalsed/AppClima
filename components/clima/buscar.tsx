@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   container: {
     height: 100,
     marginVertical: 5,
-    marginTop: 50,
+    marginTop: 70,
     padding: 20,
     zIndex: 1000,
   },

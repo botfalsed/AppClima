@@ -6,31 +6,9 @@ import { getCurrentTime12HourInTimezone, isValidTimezone } from '../../utils/tim
 export default function ClimaActual() {
   const { weatherData, loading, error } = useContext(WeatherContext);
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Cargando...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-      </View>
-    );
-  }
-
-  if (!weatherData) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>No hay datos disponibles</Text>
-      </View>
-    );
-  }
-
-  const { current, location } = weatherData;
+  // Extraer datos de manera segura para los Hooks
+  const current = weatherData?.current;
+  const location = weatherData?.location;
 
   // Memoizar la fecha y el día para evitar recálculos innecesarios
   const dateInfo = useMemo(() => {
@@ -157,6 +135,31 @@ export default function ClimaActual() {
     }
   }, [location?.tz_id, location?.localtime]);
 
+  // Condiciones de retorno después de todos los Hooks
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Cargando...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </View>
+    );
+  }
+
+  if (!weatherData) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>No hay datos disponibles</Text>
+      </View>
+    );
+  }
+
   // Verificar que tenemos datos memoizados válidos
   if (!weatherInfo) {
     return (
@@ -260,7 +263,7 @@ const styles = StyleSheet.create({
   
   },
   card: {
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.512)',
     borderRadius: 20,
     padding: 20,
     marginHorizontal: 20,

@@ -257,15 +257,15 @@ export default function TabTwoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0000006b',
+    backgroundColor: '#000000e2',
   },
   searchContainer: {
     position: 'absolute',
-    top: 0,
+    top: 20,
     left: 0,
     right: 0,
     zIndex: 1000,
-    backgroundColor: 'rgba(0, 0, 0, 0.082)',
+    backgroundColor: 'rgba(0, 0, 0, 0.086)',
     paddingTop: 100,
     paddingBottom: 10,
     paddingHorizontal: 20,
@@ -299,9 +299,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
-    minWidth: 80,
+    minWidth: 100,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(70, 44, 44, 0.2)',
   },
   statNumber: {
     fontSize: 24,
@@ -424,16 +424,17 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#000000b8',
+    marginTop:0,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 60,
+    paddingTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: 'rgba(0, 0, 0, 0.636)',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -452,5 +453,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
+   
   },
 });
